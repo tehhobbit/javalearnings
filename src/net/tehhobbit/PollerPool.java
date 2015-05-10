@@ -2,18 +2,18 @@ package net.tehhobbit;
 
 import org.apache.log4j.Logger;
 
-import java.util.LinkedList;
-import java.util.NoSuchElementException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class PollerPool {
     private final int nThreads;
     private final PoolWorker[] threads;
-    private final LinkedList queue;
-    private Logger log = Logger.getLogger(PollerPool.class.getName());
+    private BlockingQueue queue = new ArrayBlockingQueue(1024);
+    private static Logger log = Logger.getLogger(PollerPool.class.getName());
 
     public PollerPool(int nThreads) {
         this.nThreads = nThreads;
-        queue = new LinkedList();
         threads = new PoolWorker[nThreads];
         log.info("Staring worker pool with " + nThreads + " threads");
         for (int i = 0; i < nThreads; i++) {
@@ -25,11 +25,8 @@ public class PollerPool {
     public void close() {
         log.info("Waiting for threads to finnish ");
 
-        synchronized (queue) {
-            for (int i = 0; i < nThreads; i++) {
-                queue.addLast(null);
-                queue.notify();
-            }
+        for (int i = 0; i < nThreads; i++) {
+            threads[i].setRunning(false);
         }
         for (PoolWorker p : threads) {
 
@@ -43,42 +40,51 @@ public class PollerPool {
     }
 
     public void put(Runnable r) {
-        synchronized (queue) {
-            queue.addLast(r);
-            queue.notifyAll();
+        try {
+            queue.put(r);
+        } catch (InterruptedException e){
+
         }
+
     }
 
     private class PoolWorker extends Thread {
+        public Boolean running = false;
 
+        public void setRunning(Boolean running) {
+            this.running = running;
+        }
+        public Boolean getRunning() {
+            return running;
+        }
         public void run() {
             Runnable poller;
             log.info("Starting worker " + this);
-            while (true) {
-                synchronized (queue) {
-                    while (queue.isEmpty()) {
-                        try {
-                            queue.wait();
-                        } catch (InterruptedException e) {
-                            break;
-                        }
-                    }
-                    try {
+            running = true;
+            while (running) {
+                try {
 
-                        poller = (Runnable) queue.removeFirst();
-                        log.debug(poller);
-                        if (poller == null) {
-                            break;
-                        } else {
-                            poller.run();
-                        }
-                    } catch (NoSuchElementException e) {
-                        log.error("Something odd happened " + e.toString());
+                    Object next =  queue.poll(400, TimeUnit.MICROSECONDS);
+                    if(next == null) {
+                        continue;
+                    } else {
+                        poller = (Runnable) next;
+                        poller.run();
                     }
+                } catch (InterruptedException e) {
+                    break;
                 }
+                log.debug(poller);
+                try {
+                    TimeUnit.SECONDS.sleep((long) (Math.random() * 10));
+                } catch (InterruptedException e){
+
+                }
+
 
             }
             log.info("Exiting thread " + this);
         }
+
     }
 }

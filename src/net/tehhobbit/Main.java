@@ -19,7 +19,7 @@ public class Main {
                 "5.5.5.5",
 
         };
-        PollerPool pool = new PollerPool(2);
+        PollerPool pool = new PollerPool(10);
         for (String host : hostNames) {
             SnmpClient client = new SnmpClient(host);
             client.setCommunity("public");

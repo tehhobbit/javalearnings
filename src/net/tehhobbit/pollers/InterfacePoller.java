@@ -8,15 +8,14 @@ public class InterfacePoller implements Runnable {
     public String hostName;
     SnmpClient snmpClient;
 
+
     public InterfacePoller(String hostName, SnmpClient snmpClient) {
         this.hostName = hostName;
         this.snmpClient = snmpClient;
-        log.info(this);
     }
 
     public void run() {
-        log.debug("Running interface poller for " + hostName);
-        log.info("Doing things with interfaces ");
+        log.info("Running interface poller for " + hostName);
         try {
             snmpClient.poll(".1");
         } catch (Exception e) {
