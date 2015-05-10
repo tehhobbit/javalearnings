@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="module_javalearnig" default="compile.module.javalearnig">
+    <dirname property="module.javalearnig.basedir" file="${ant.file.module_javalearnig}"/>
+
+    <property name="module.jdk.home.javalearnig" value="${project.jdk.home}"/>
+    <property name="module.jdk.bin.javalearnig" value="${project.jdk.bin}"/>
+    <property name="module.jdk.classpath.javalearnig" value="${project.jdk.classpath}"/>
+
+    <property name="compiler.args.javalearnig" value="-encoding UTF-8 -source 1.6 ${compiler.args}"/>
+
+    <property name="javalearnig.output.dir" value="${module.javalearnig.basedir}/out/production/javalearnig"/>
+    <property name="javalearnig.testoutput.dir" value="${module.javalearnig.basedir}/out/test/javalearnig"/>
+
+    <path id="javalearnig.module.bootclasspath">
+        <!-- Paths to be included in compilation bootclasspath -->
+    </path>
+
+    <path id="javalearnig.module.production.classpath">
+        <path refid="${module.jdk.classpath.javalearnig}"/>
+        <path refid="library.org.snmp4j:snmp4j:1.10.1.classpath"/>
+    </path>
+
+    <path id="javalearnig.runtime.production.module.classpath">
+        <pathelement location="${javalearnig.output.dir}"/>
+        <path refid="library.org.snmp4j:snmp4j:1.10.1.classpath"/>
+    </path>
+
+    <path id="javalearnig.module.classpath">
+        <path refid="${module.jdk.classpath.javalearnig}"/>
+        <pathelement location="${javalearnig.output.dir}"/>
+        <path refid="library.org.snmp4j:snmp4j:1.10.1.classpath"/>
+    </path>
+
+    <path id="javalearnig.runtime.module.classpath">
+        <pathelement location="${javalearnig.testoutput.dir}"/>
+        <pathelement location="${javalearnig.output.dir}"/>
+        <path refid="library.org.snmp4j:snmp4j:1.10.1.classpath"/>
+    </path>
+
+
+    <patternset id="excluded.from.module.javalearnig">
+        <patternset refid="ignored.files"/>
+    </patternset>
+
+    <patternset id="excluded.from.compilation.javalearnig">
+        <patternset refid="excluded.from.module.javalearnig"/>
+    </patternset>
+
+    <path id="javalearnig.module.sourcepath">
+        <dirset dir="${module.javalearnig.basedir}">
+            <include name="src"/>
+        </dirset>
+    </path>
+
+
+    <target name="compile.module.javalearnig"
+            depends="compile.module.javalearnig.production,compile.module.javalearnig.tests"
+            description="Compile module javalearnig"/>
+
+    <target name="compile.module.javalearnig.production" depends="register.custom.compilers"
+            description="Compile module javalearnig; production classes">
+        <mkdir dir="${javalearnig.output.dir}"/>
+        <javac2 destdir="${javalearnig.output.dir}" debug="${compiler.debug}" nowarn="${compiler.generate.no.warnings}"
+                memorymaximumsize="${compiler.max.memory}" fork="true" executable="${module.jdk.bin.javalearnig}/javac">
+            <compilerarg line="${compiler.args.javalearnig}"/>
+            <bootclasspath refid="javalearnig.module.bootclasspath"/>
+            <classpath refid="javalearnig.module.production.classpath"/>
+            <src refid="javalearnig.module.sourcepath"/>
+            <patternset refid="excluded.from.compilation.javalearnig"/>
+        </javac2>
+
+        <copy todir="${javalearnig.output.dir}">
+            <fileset dir="${module.javalearnig.basedir}/src">
+                <patternset refid="compiler.resources"/>
+                <type type="file"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <target name="compile.module.javalearnig.tests"
+            depends="register.custom.compilers,compile.module.javalearnig.production"
+            description="compile module javalearnig; test classes" unless="skip.tests"/>
+
+    <target name="clean.module.javalearnig" description="cleanup module">
+        <delete dir="${javalearnig.output.dir}"/>
+        <delete dir="${javalearnig.testoutput.dir}"/>
+    </target>
+</project>
